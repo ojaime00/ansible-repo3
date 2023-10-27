@@ -1,0 +1,12 @@
+[Linux]
+ojaime@192.168.1.160
+
+[iosxe]
+ojaime@192.168.1.130
+
+[iosxe:vars]
+ansible_ssh_user=ojaime
+ansible_ssh_pass=OJwBrn52
+ansible_become_pass=IJwBrn63
+ansible_python_interpreter=/Users/oscarjaime/Library/Python/3.9/bin
+

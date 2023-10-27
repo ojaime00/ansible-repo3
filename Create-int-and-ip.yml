@@ -1,0 +1,19 @@
+---
+- name: Create and address loopback interface
+  hosts: iosxe
+  gather_facts: no
+
+  tasks:
+  - name: Create loopback 22
+    cisco.ios.ios_interfaces:
+      config:
+      - name: Loopback22
+        description: Created by ansible
+        enabled: true
+        state: present
+  - name: Assign IP to loopback
+    cisco.ios.ios_l3_interfaces:
+      config:
+      - name: Loopback22
+        ipv4:
+        - address: 192.10.1.22/24

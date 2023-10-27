@@ -1,0 +1,31 @@
+---
+
+- name: General Config
+  hosts: iosxe
+  gather_facts: false
+  
+
+  tasks:
+
+  - name: Add banner
+
+    ios_banner:
+      banner: login
+      text: HLAB router login
+      state: present
+  
+  - name: change hostname
+    ios_config:
+      lines:
+        - hostname hlab-8000v
+        - ntp server 192.168.1.102
+
+  - name: Add description to interface
+    ios_config:
+      lines:
+        - description - Config by ansible
+      parents: Interface GigabitEthernet1
+
+
+
+

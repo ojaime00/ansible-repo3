@@ -1,0 +1,12 @@
+---
+- name: Create and address loopback interface
+  hosts: iosxe
+  gather_facts: no
+
+  tasks:
+  - name: Create loopback 22
+    cisco.ios.ios_interfaces:
+      config:
+      - name: Loopback22
+        state: absent
+
