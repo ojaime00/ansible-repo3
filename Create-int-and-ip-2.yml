@@ -7,6 +7,35 @@
   - name: Create loopback 22
     cisco.ios.ios_interfaces:
       config:
-      - name: Loopback22
-        state: absent
+      - name: Loopback{{item}}
+        description: Created by ansible
+        enabled: true
+    
+    loop:
+        - 11
+        - 12
+        - 13
+    register: item-var
+    ansible.builtin.debug
+      msg: " item = {{item}} , item-var= {{item-var}}"
 
+  
+  - name: Assign IP to loopback
+    cisco.ios.ios_l3_interfaces:
+      config:
+      - name: Loopback{{item}}
+        ipv4:
+        - address: 192.10.{{subnet_id+1}}.{{item}}/24
+    
+    loop:
+        - 11
+        - 12
+        - 13
+    
+  - name: Save running to startup when modified
+    cisco.ios.ios_config:
+      save_when: modified
+
+##
+## problem with subnet_id. value is always 11 and creates a subnet conflict with next interface- IDK why loopback 13 had subnet 14
+##

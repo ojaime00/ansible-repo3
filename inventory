@@ -5,6 +5,7 @@ ojaime@192.168.1.160
 192.168.1.130
 
 [iosxe:vars]
+subnet_id=10
 ansible_user=ojaime
 ansible_password=OJwBrn52
 ansible_connection=network_cli
