@@ -1,4 +1,5 @@
 ---
+
 - name: Create and address loopback interface
   hosts: iosxe
   gather_facts: no
@@ -14,28 +15,27 @@
     loop:
         - 11
         - 12
-        - 13
-    register: item-var
-    ansible.builtin.debug
-      msg: " item = {{item}} , item-var= {{item-var}}"
-
+        - 13  
   
-  - name: Assign IP to loopback
+  - name: Assign IP to loopback interface
     cisco.ios.ios_l3_interfaces:
       config:
       - name: Loopback{{item}}
         ipv4:
-        - address: 192.10.{{subnet_id+1}}.{{item}}/24
-    
+        - address: 192.10.{{item}}.{{item}}/24
+      
     loop:
         - 11
         - 12
         - 13
-    
+    register: subip
+
   - name: Save running to startup when modified
     cisco.ios.ios_config:
       save_when: modified
 
 ##
-## problem with subnet_id. value is always 11 and creates a subnet conflict with next interface- IDK why loopback 13 had subnet 14
-##
+## Line - address: 192.10.{{item}}.{{item}}/24 was causing problem with subnet_id. 
+## Looked like value of {{item}} was creating a subnet conflict with next interface.
+## However, after running same playbook a second time and subsequent times playbook worked fine.
+## 

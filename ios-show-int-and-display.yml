@@ -1,0 +1,17 @@
+---
+- name: Interface show commands
+  hosts: iosxe
+  gather_facts: no
+
+  tasks:
+  - name: run show interface and save output to "myint" var
+    cisco.ios.ios_command:
+      commands: show ip interface brief
+    register: myint
+  
+  - name: Show value of "myint" var
+    debug:
+      var: myint["stdout_lines"][0] 
+ 
+    
+      

@@ -1,11 +1,12 @@
 ---
+
 - name: configure ntp and acl via CLI
   hosts: iosxe
   gather_facts: no
 
   tasks:
   - name: set ACL via CLI
-    cisco.ios.ios_config:
+      cisco.ios.ios_config:
       lines:
         - 10 permit ip host 1.1.1.1 any log
         - 20 permit ip host 2.2.2.2 any log
@@ -24,4 +25,5 @@
         - 12
         - 13
         - 14
-        
+
+## NOTE: var {{subnet_id}} value comes from Inventory file.        
