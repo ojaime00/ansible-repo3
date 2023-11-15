@@ -2,7 +2,7 @@
 
 - name: General Config
   hosts: iosxe
-  gather_facts: false
+  gather_facts: no
   
 
   tasks:
@@ -14,13 +14,13 @@
       text: HLAB router login
       state: present
   
-  - name: change hostname
+  - name: change hostname and add NTP server
     ios_config:
       lines:
         - hostname hlab-8000v
         - ntp server 192.168.1.102
 
-  - name: Add description to interface
+  - name: change description
     ios_config:
       lines:
         - description - Config by ansible

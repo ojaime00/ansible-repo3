@@ -1,0 +1,17 @@
+---
+
+- name: configure xlation rule via CLI
+  hosts: iosxe
+  gather_facts: no
+
+  tasks:
+
+  - name: xlate rule
+    ios_config:
+      lines:
+        - rule 1 /\+1/ //
+        - rule 2 /1/ //
+      parents: ['voice translation-rule 10']
+      before: no voice translation-rule 10
+
+## had problems with code alignment - this seems to be right

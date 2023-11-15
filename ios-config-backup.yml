@@ -1,0 +1,20 @@
+---
+
+- name: Backup router config to file
+  hosts: iosxe
+  gather_facts: no
+
+  tasks:
+  - name: Save running to startup when modified
+    cisco.ios.ios_config:
+      save_when: modified
+
+  - name: backup router config
+    ios_config:
+      backup: true
+      backup_options:
+        filename: config-backup.cfg
+        dir_path: Play/backup
+
+
+## backup running config to file in current directory

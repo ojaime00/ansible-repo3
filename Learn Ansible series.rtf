@@ -1,0 +1,1217 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fswiss\fcharset0 Helvetica;\f2\fmodern\fcharset0 Courier;
+\f3\froman\fcharset0 Times-Roman;\f4\fswiss\fcharset0 Helvetica-BoldOblique;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue255;\red251\green2\blue255;\red252\green245\blue234;
+\red251\green2\blue7;\red0\green0\blue0;\red0\green0\blue233;}
+{\*\expandedcolortbl;;\cssrgb\c1680\c19835\c100000;\cssrgb\c100000\c25279\c100000;\cssrgb\c99216\c96863\c93333;
+\cssrgb\c100000\c14913\c0;\cssrgb\c0\c0\c0;\cssrgb\c0\c0\c93333;}
+\margl1440\margr1440\vieww13380\viewh10640\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs28 \cf0 https://github.com/ojaime00/ansible_repo.gitc Ansible Series from Learn Linux TV - 
+\f1\b0 \
+\
+
+\f0\b \cf2 Chapter 01
+\f1\b0 \cf0 \
+\
+workstation + 3 Linux servers\
+\
+SSH: You can use password or use a SSH key (optional but more secure)\
+\
+Connect to target servers via SSh to ensure you can login\
+\
+
+\f0\b \cf2 Chapter 02
+\f1\b0 \cf0 \
+\
+To generate a ssh key:\
+in the Workstation:\
+\
+
+\f0\b ls -la .ssh
+\f1\b0 \
+this to confirm if you have any exiting ssh key\
+\
+\
+To generate SSH key:\
+\
+oscarjaime$ 
+\f0\b ssh-keygen -t ed25519 -C "OJ default key"
+\f1\b0 \
+(t is for type, C is for Comment)\
+\
+Going to ask for folder to save the key. default is the .ssh folder. You can accept this\
+Then is going to prompt for passphrase and to confirm it. I used 
+\f0\b OJwBrn52
+\f1\b0 \
+\
+Do 
+\f0\b ls -la .ssh
+\f1\b0  again and you'll see a couple of new files:\
+\
+-rw-------   1 oscarjaime  staff    464 Oct 19 15:38 id_ed25519\
+-rw-r--r--   1 oscarjaime  staff     96 Oct 19 15:38 id_ed25519.pub\
+\
+The .pub file is the Public key. The other one is the private key and that one you should keep it safe\
+\
+You can CAT the keys and view it's contents\
+\
+\
+To copy the pub ssh key to a server with IP 172.16.250.133:\
+\
+
+\f0\b ssh-copy-id -i ~.ssh/id_ed25519.pub 172.16.250.133
+\f1\b0 \
+\
+going to prompt for your workstation user password (I believe, but not sure if it asks for the key passphrase)\
+\
+Then you'll get "Number of of key(s) added: 1 " message\
+\
+In the target server, do a  
+\f0\b ls -la .ssh
+\f1\b0  command.\
+You should see a file named authorized_keys. If you CAT this file, you'll see the public key that was just copied.\
+\
+Next time you ssh to target server, will prompt for key passphrase and connect\
+\
+
+\f0\b Next, generate a ssh key that's dedicated to Ansible
+\f1\b0 \
+\
+To make it different, use a different Comment\
+\
+
+\f0\b ssh-keygen -t ed25519 -C "ansible"\
+\
+
+\f1\b0 then be careful not just press enter in the subsequent prompt for the folder and name or you will overwrite the first key. This time you want to save it with a different ID name, in this case name it ansible:
+\f0\b \
+\
+
+\f1\b0 You can enter: 
+\f0\b /home/oscarjaime/.ssh/ansible
+\f1\b0 \
+\
+Also, you don want to have a passphrase in this key, so Ansible can do it's work transparently. Just press enter twice to create a blank key\
+\
+Copy this Pub key to your target servers also. However, when you copy this key, the target server is going to ask for a passphrase. Enter the passphrase of the first key (
+\f0\b id_ed25519) 
+\f1\b0 to proceed. The new key will be copied.\
+\
+If you CAT the authorized_keys file on any target server, you'll now see the two keys copied.\
+\
+In order to use the ansible key to ssh to target servers, use the following command, for example:\
+\
+
+\f0\b ssh -i ~/.ssh/ansible 72.16.250.133
+\f1\b0 \
+\
+The connection will be established without having to enter a passphrase. That's what Ansible going to be able to do.\
+\
+To use the first key, you ssh to target server just using the ip address;\
+\
+
+\f0\b ssh 72.76.255.133
+\f1\b0 \
+\
+You'll be prompted for the passphrase for key 
+\f0\b id_ed25519\
+
+\f1\b0 \
+In order to avoid having to enter the key everytime and have it cached for multiple uses, do the following commands:\
+\
+
+\f0\b eval $(ssh-agent)
+\f1\b0 \
+\
+This will enable the ssh-agent and you'll get a response like this:\
+\
+Agent pid 2362\
+\
+\
+do 
+\f0\b ps aux | grep 2362 
+\f1\b0 \
+\
+This will display that the ssh-agent process is running\
+\
+Now type:\
+\
+
+\f0\b ssh-add
+\f1\b0 \
+\
+Will prompt you for the passphrase of  
+\f0\b id_ed25519
+\f1\b0 \
+Enter the passphrase\
+\
+Will respond that Identity was added\
+\
+This caches the identity (passphrase) of that key. \
+\
+next time you ssh to target servers you will not be prompted for passphrase.\
+\
+However, this caching is not permanent. If you close your terminal session, you'll need to enter the commands above again (starting with enabling the ssh-agent)\
+\
+But can automate this process with an alias:\
+
+\f0\b alias ssha='eval $(ssh-agent) && ssh-add'
+\f1\b0 \
+\
+ssha is the name of the alias and can be anything. \
+You run the alias by typing ssha. will prompt for the key passphrase and that will be it.\
+\
+However, the alis also does not survive when you close your terminal session. To preserve it, you can edit and add it to your .bashrc file. For example, using the nano editor:\
+\
+
+\f0\b nano .bashrc
+\f1\b0 \
+\
+Add the alias anywhere in the file body:\
+\
+
+\f0\b # ssh agent
+\f1\b0 \
+
+\f0\b alias ssha='eval $(ssh-agent) && ssh-add'\
+\
+
+\f1\b0 save the file and logout from the server terminal session to test.\
+ssh to server again.\
+\
+To verify alias, type 
+\f0\b alias ssha
+\f1\b0 \
+this will display the contents of the alias ssha.\
+\
+To run the alias, simply type 
+\f0\b ssha
+\f1\b0 .\
+You'll be prompted for the default key passphrase\
+\
+end of chapter 02\
+\
+
+\f0\b \cf2 Chapter 03  Setting up GIT repository
+\f1\b0 \cf0 \
+\
+start by verifying you have GIT installed:\
+\
+
+\f0\b which git
+\f1\b0 \
+\
+should get an output like this:\
+/usr/bin/git\
+\
+If not installed you can run:\
+\
+sudo apt update\
+sudo apt install git\
+\
+Next is to create an account in {\field{\*\fldinst{HYPERLINK "http://github.com"}}{\fldrslt github.com}} if you don't have one\
+\
+my account is {\field{\*\fldinst{HYPERLINK "mailto:ojaime00@gmail.com"}}{\fldrslt ojaime00@gmail.com}}/OJwBrn52!\
+\
+Create repository ansible_repo3 in github\
+Note: Always add the README.md file to initialize the repo\
+\
+\
+In github, click on icon on upper right corner- a menu will open- click on Settings\
+on the left side panel, clikk on SSH and GPG keys\
+Create anew ssh key - name it same as default key you did in the workstation (OJ default key)\
+\
+Next, in your workstation CAT your default pub key and copy the entire line. Paste it in the Key area in the ssh key in github and cli9ck on Add Key\
+\
+
+\f0\b cat .ssh/id_ed25519.pub
+\f1\b0 \
+\
+result from above command: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBvBSUNVbZbPni/b68CaCJtltiQavMTwJrEcIdavaEa OJ default key\
+\
+\
+Still in github, go to the newly added repository (ansible_repo3)\
+copy the URL in the middle next to SSH or click on the green Code button\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "https://github.com/ojaime00/ansible_repo.git"}}{\fldrslt \cf0 https://github.com/ojaime00/ansible-repo3.git}}\
+\
+In your workstation enter:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf0 git clone {\field{\*\fldinst{HYPERLINK "https://github.com/ojaime00/ansible_repo.git"}}{\fldrslt https://github.com/ojaime00/ansible-repo3.git}}
+\f1\b0 \
+\
+If successful, this will create a clone directory in your workstation. Change to that folder\
+\
+----------------- \
+
+\f0\b NOTE: 
+\f1\b0 had problems with commit command when creating a repo with https authentication when doing final git push origin command.\
+Found recommended command 
+\f0\b git pull origin <your-branch>
+\f1\b0   (in my case branch was main)\
+and 
+\f0\b git pull --rebase origin [branch] (branch is = main for me)
+\f1\b0 \
+\
+But this failed to correct issue\
+\
+\
+Had to create a repo with SSH auth : ansible-repo3 , using command below\
+\
+
+\f0\b git clone git@github.com:ojaime00/ansible-repo3.git
+\f1\b0 \
+\
+Had to use also final command 
+\f0\b git push origin main
+\f1\b0  to complete the update to github\
+\
+No need to recreate SSH key that was created earlier. No need to repeat the 
+\f0\b git config
+\f1\b0  commands below either.\
+\
+ ---------------- \
+\
+
+\f0\b cd ansible_repo3\
+\
+git config --global user.name "Oscar Jaime"\
+git config --global user.email "{\field{\*\fldinst{HYPERLINK "mailto:ojaime00@gmail.com"}}{\fldrslt ojaime00@gmail.com}}"
+\f1\b0 \
+\
+
+\f0\b cat ~/.gitconfig 
+\f1\b0 \
+will show the info you just entered\
+\
+In the workstation ansible-repo3 directory, created a new file file-test.txt using VIM\
+\
+
+\f0\b git status
+\f1\b0  gives you a a list of file changes or new files that have not been added to Git repo yet\
+\
+use 
+\f0\b git add <filename>
+\f1\b0  to update what will be committed\
+\
+or use 
+\f0\b git restore <filename>
+\f1\b0  to discard changes done to the local workstation file \
+\
+Also, 
+\f0\b git diff <filename>
+\f1\b0  will display the changes done to the local file\
+\
+Finally you need to more command to update the files in the github repo., \
+
+\f0\b git commit -m "this a commit for two files" 
+\f1\b0   -m is to add a message to this commit, can be anything that provides a clue on what was changed\
+\
+
+\f0\b git push origin master 
+\f1\b0 will complete the updates to github.\
+
+\f0\b NOTE:
+\f1\b0  I had to use 
+\f0\b git push origin main\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf3 Summary To Update GIT repo\cf0 \
+\
+git add <filename>
+\f1\b0   or *
+\f0\b \
+\
+git commit -m "message"\
+\
+git push origin main\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf2 Chapter 04
+\f1\b0 \cf0 \
+\
+Installing Ansible and run commands\
+\
+Install Ansible\
+\
+
+\f0\b sudo apt update 
+\f1\b0 \
+This is to update indexes.\
+Got java error - "Unable to locate a Java Runtime that supports apt"\
+\
+
+\f0\b sudo apt install ansible
+\f1\b0  - to start Ansible installation\
+\
+ create inventory file\
+\
+
+\f0\b vim inventory
+\f1\b0 \
+\
+add the ip addr of your hosts, in my case only one line that contains the ip addr of hlab-cube:\
+
+\f0\b ## linux lite host\
+admin@192.168.1.160 \
+\
+write and quit vim (:wq)\
+\
+git status 
+\f1\b0 to check for uncommited changes\
+\
+\
+
+\f0\b git add inventory 
+\f1\b0 (to add new file to next commit)
+\f0\b \
+\
+git commit -m "added inventory file with one host"
+\f1\b0 \
+\
+
+\f0\b git push origin main
+\f1\b0 \
+\
+\
+---------------------------------------------------------------------------------------------- \
+had to generate a ssh-rsa key in workstation for Cisco Cube as other type not supported\
+\
+
+\f0\b ssh-keygen -t ssh-rsa -C "ansible-rsa"
+\f1\b0 \
+\
+
+\f0\b cat ~/.ssh/ansible-rsa.pub
+\f1\b0 \
+displays the key contents\
+\
+However, is recommended to break the contents into multiple lines as router would not accept lines over 256 chars. use following command to do that:\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \cb4 \expnd0\expndtw0\kerning0
+fold -b -w 72 ~/.ssh/ansible-rsa.pub
+\f2\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf0 \cb1 \kerning1\expnd0\expndtw0 \
+Copy the output to clipboard\
+\
+In Cisco Cube:\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \cb4 \expnd0\expndtw0\kerning0
+conf t\
+ip ssh pubkey-chain\
+username ojaime\
+key-string\
+<< paste your multi-line public key here >>\
+exit
+\f2\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf0 \cb1 \kerning1\expnd0\expndtw0 \
+To verify:\
+
+\f0\b sh run | s pubkey
+\f1\b0 \
+\
+The output would be something like this:\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb4 \expnd0\expndtw0\kerning0
+ip ssh pubkey-chain\
+  username nsrc\
+   key-hash ssh-rsa EFF40492D1D6BF5D0B68491128456D27 yourname@yourdomain.example \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \cb1 \kerning1\expnd0\expndtw0 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+Note that the configuration doesn't show the actual public key, but its fingerprint instead. Compare this against the fingerprint of your public key to check you have the correct key loaded.
+\f3\fs24 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf0 \kerning1\expnd0\expndtw0 In the workstation:\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \cb4 \expnd0\expndtw0\kerning0
+ssh-keygen -l -f ~/.ssh/ansible-rsa.pub\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \
+2048 ef:f4:04:92:d1:d6:bf:5d:0b:68:49:11:28:45:6d:27  yourname@yourdomain.example (RSA)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \cb1 \kerning1\expnd0\expndtw0 \
+For other info and troubleshooting see link below:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "https://nsrc.org/workshops/2016/renu-nsrc-cns/raw-attachment/wiki/Agenda/Using-SSH-public-key-authentication-with-Cisco.htm"}}{\fldrslt \cf0 https://nsrc.org/workshops/2016/renu-nsrc-cns/raw-attachment/wiki/Agenda/Using-SSH-public-key-authentication-with-Cisco.htm}}\
+\
+SSH to cisco cube 192.168.1.130 - still failed with error:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf0 ssh -i ~/.ssh/ansible-rsa ojaime@192.168.1.130
+\f1\b0 \
+\
+Unable to negotiate with 192.168.1.130 port 22: no matching key exchange method found. Their offer: diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1\
+\
+Troubleshooting this error but no solution yet.\
+Made it work on router 8000v with router config above. Only difference I copied the key from workstation leaving out the start and end comments (copy just the key code). However this works when connecting with key manually (asks for user password) but don't work if run with ansible.\
+Trying to find out why it asks for password when it shouldn't\
+\
+\
+\
+---------------------------------------------------------------------------------------------- \
+\
+Continue with Chapter 04\
+\
+In the inventory changed host to addr. of Linux Lite VM\
+Noted that I needed to include the username otherwise uses the workstation username oscarjaime and connection fails\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "mailto:ojaime@192.168.1.160"}}{\fldrslt \cf0 ojaime@192.168.1.160}}\
+\
+Then ran ansible test \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf0 ansible all --key-file ~/.ssh/ansible -i inventory -m ping
+\f1\b0 \
+\
+Result indicated successful connection:\
+ojaime@192.168.1.160 | SUCCESS => \{\
+    "ansible_facts": \{\
+        "discovered_interpreter_python": "/usr/bin/python3"\
+    \},\
+    "changed": false,\
+    "ping": "pong"\
+\}\
+\
+\
+Configure ansible.cfg\
+\
+This is how to you set some defaults for Ansible (ansible read this file whenever you run it). There's another .cfg file that resides at /etc/ansible (created when you install ansible). If you create one in your current working directory this .cfg file will override the one create at install.\
+\
+
+\f0\b vim ansible.cfg\
+\
+[defaults]\
+# next line sets the inventory file to inventory\
+inventory = inventory\
+# next line set the location and name of your ansible private ssh key\
+private_key_file = ~/.ssh/ansible-rsa
+\f1\b0 \
+\
+Next time you run our test, you just need to input:\
+\
+
+\f0\b ansible all -m ping
+\f1\b0 \
+\
+The other parameters will be read from the ansible.cfg file\
+\
+some other useful ansible commands:\
+\
+
+\f0\b ansible all --list-hosts
+\f1\b0 \
+this commands reads your inventory file and list the hosts in it.\
+\
+
+\f0\b ansible all -m gather_facts
+\f1\b0 \
+Will list all sort of info about your host(s)\
+\
+or\
+\
+
+\f0\b ansible all -m gather_facts --limit 172.16.250.132
+\f1\b0 \
+Displays info about a single host\
+\
+\
+
+\f0\b \cf2 Inventory and Ansible.cfg - other info from other videos
+\f1\b0 \cf0 \
+------------------------------------------------------------------- \
+\
+About the
+\f0\b  inventory file
+\f1\b0 , you create group of servers;\
+\
+[Linux]\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "mailto:ojaime@192.168.1.160"}}{\fldrslt \cf0 ojaime@192.168.1.160}}\
+\
+[IOSXE]\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "mailto:admin@192.168.1.130"}}{\fldrslt \cf0 admin@192.168.1.130}}\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+[iosxe:vars]\
+subnet_id=<unique_integer>
+\f2\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf0 ##refer to subnet_id with \{\{subnet_id\}\} in playbook - normally used with Loop\
+ansible_user=ojaime\
+ansible_password=OJwBrn52\
+ansible_connection=network_cli\
+ansible_network_os=ios\kerning1\expnd0\expndtw0 \
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf0 Ansible.cfg
+\f1\b0 \
+[defaults]\
+#adding next line will disable ssh-key checking and usage\
+
+\f0\b host_key_checking=False
+\f1\b0 \
+\
+then go to inventory file and enter credentials for you servers:\
+\
+[Linux]\
+
+\f0\b 192.168.1.160
+\f1\b0 \
+\
+[iosxe]\
+
+\f0\b 192.168.1.130
+\f1\b0 \
+\
+
+\f0\b [Linux:vars]\
+ansible_ssh_user=ojaime\
+ansible_ssh_pass=OJwBrn52\
+## optional- if you have different sudo passwords on different hosts\
+ansible_become_pass=IJwBrn63\
+\
+[iosxe:vars]\
+ansible_ssh_user=ojaime\
+ansible_ssh_pass=OJwBrn52
+\f1\b0 \
+\
+\
+you can run the ping tes,  to run it against all servers:\
+\
+
+\f0\b ansible all -m ping
+\f1\b0 \
+\
+or to target a specific group of servers:\
+\
+
+\f0\b ansible IOSXE -m ping
+\f1\b0 \
+\
+\
+Another command that would be useful is to display the release version of servers in the Linux group:\
+## set the scope of hosts, call the shell module and specify the command to be executed by the shell\
+
+\f0\b ansible Linux -m shell -a "lsb_release -a"
+\f1\b0 \
+\
+\
+Playbooks\
+\
+Create a Playbook with name net-tools in yaml format\
+\
+
+\f0\b vim net-tools.yaml\
+\
+---\
+## set the range of hosts to be touched\
+hosts: Linux\
+## set command shell to root (sudo)\
+become: yes\
+## add tasks - this one is calling the apt module\
+tasks:\
+	- name: Install NetTools\
+	  apt:\
+		name: net-tools\
+\
+:wq
+\f1\b0 \
+\
+\
+Run the playbook with the following command:\
+\
+
+\f0\b ansible-playbook net-tools.yaml -K
+\f1\b0 \
+The -K will force ansible to ask for the sudo password\
+\
+end of other videos\
+\
+\
+------------------------------------------------------------------------- \
+
+\f0\b Other video for IOS commands
+\f1\b0 \
+\
+Changed inventory to:\
+\
+[Linux]\
+ojaime@192.168.1.160\
+\
+[iosxe]\
+
+\f0\b 8000v ansible_host=192.168.1.130
+\f1\b0 \
+\
+\
+[iosxe:vars]\
+ansible_user=ojaime\
+ansible_password=OJwBrn52\
+ansible_connection=network_cli\
+ansible_network_os=ios\
+\
+Ansible.cfg had line under [Defaults]:\
+host_key_checking=False\
+\
+Then run 
+\f0\b ansible iosxe -m ping
+\f1\b0  - this was successful\
+\
+Ran:\
+ansible iosxe -m ios_command -a "commands='sh ip int bri'"\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf5 Failed with:\cf0 \
+\
+\cf5 [WARNING]: ansible-pylibssh not installed, falling back to paramiko\
+192.168.1.130 | FAILED! => \{\
+    "changed": false,\
+    "msg": "paramiko is not installed: No module named 'paramiko'"\
+\}\cf0 \
+\
+After installing ansible-pylibssh\
+pip install --user ansible-pylibssh\
+\
+Command ran successfully\
+\
+192.168.1.130 | SUCCESS => \{\
+    "changed": false,\
+    "stdout": [\
+        "Interface              IP-Address      OK? Method Status                Protocol\\nGigabitEthernet1       192.168.1.130   YES NVRAM  up                    up      \\nGigabitEthernet2       172.20.100.130  YES NVRAM  up                    up      \\nGigabitEthernet3       10.10.10.1      YES NVRAM  up                    up"\
+    ],\
+    "stdout_lines": [\
+        [\
+            "Interface              IP-Address      OK? Method Status                Protocol",\
+            "GigabitEthernet1       192.168.1.130   YES NVRAM  up                    up      ",\
+            "GigabitEthernet2       172.20.100.130  YES NVRAM  up                    up      ",\
+            "GigabitEthernet3       10.10.10.1      YES NVRAM  up                    up"\
+        ]\
+    ]\
+\}\
+\
+General-config.yaml Playbook\
+\
+---\
+- name: General Config\
+  hosts: iosxe\
+  \
+  tasks:\
+\
+  - name: Add banner\
+\
+    ios_banner:\
+       banner: login\
+       text: HLAB router login\
+       state: present\
+\
+  - name: Add Loopback\
+\
+    ios_interface: 	\
+      name: Loopback21\
+      state: present\
+\
+run it with: ansible-playbook general-config.yml\
+\
+\cf5 Got error on :\
+- name: Add Loopback\
+    ^ here\cf0 \
+\
+\
+Next playbook section ran ok\
+\
+- name: change hostname\
+    ios_config:\
+      lines:\
+        - hostname hlab-8000v\
+        - ntp server 192.168.1.102\
+\
+## Configure interface\
+\
+- name: change hostname\
+    ios_config:\
+      lines:\
+        - description - Config by ansible\
+      parents: Interface GigabitEthernet1\
+\
+ Had to fix tab spacing but ran ok\
+\
+Other examples:\
+\
+- name: Add router ID to exiting config OSPF 100\
+    ios_config:\
+      lines:\
+        - router-id 192.168.1.1\
+      parents: router ospf 100\
+\
+\
+- name: Push config from file\
+    ios_config:\
+       src:  "~/ansible-repo3/configs/router.txt"\
+\
+router.txt file contents:\
+username admin2 password 0 cisco\
+\
+\
+- name: Save running config when modified\
+    ios_config:\
+       save_when: modifies\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf0 Example playbook to save running config to a file\
+
+\f1\b0 \
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+---\
+- hosts: CSR-01\
+  gather_facts: true\
+  connection: local\
+\
+  tasks:\
+   - name: show run \
+   ios_command:\
+   commands:\
+     - show run \
+     host: "\{\{ ansible_host \}\}"\
+     username: roger\
+     password: password\
+     register: config\
+\
+  - name: save output to /etc/ansible/backups \
+  copy: \
+  content: "\{\{ config.stdout[0] \}\}"\
+  dest: "/etc/ansible/backups/show_run_\{\{ inventory_hostname \}\}.txt"\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \kerning1\expnd0\expndtw0 \
+\
+\
+
+\f0\b Explanation of above playbook line by line
+\f1\b0 \
+\
+\'97 the first line of any YAML file has to start with three dashes \'96 this denotes it as a YAML file\
+\
+\'96 hosts: CSR-01 the next line starts with a single dash and defines the hosts that this playbook should run agains, in this case our single CSR router\
+\
+gather_facts: true this line needs to be here to define we are collecting information\
+\
+connection: local this defines the connection will be made from this box\
+\
+tasks: we now start to define the actual task that will run\
+\
+\'96 name: show run \'96 this is the name of our first task\
+\
+ios_command: this is an ansible module and is some code within the Ansible core that can be used to run commands in ios \'96 more info here\
+\
+commands: what follows here is the command that will be run\
+\
+\'96 show run in our case show run\
+\
+host: \'93\{\{ ansible_host \}\}\'94 this defines the connection variables for the ansible host \'96 username / password etc\
+\
+username: local username defined on the router\
+\
+password: local password defined on the router\
+\
+
+\f0\b register: config
+\f1\b0  Once Ansible has connected to the router and run the show run command it registers that information to a 
+\f0\b variable
+\f1\b0  called 
+\f0\b config
+\f1\b0  (you can call this what you want)\
+\
+-name save output to /etc/ansible/backups \'96 this is the name of the next task and is just a description\
+\
+copy: this is calling another Ansible Module called copy\
+\
+content: \'93\{\{ 
+\f0\b config
+\f1\b0 .stdout[0] \}\}\'94 this registers the 
+\f0\b config
+\f1\b0  variable contents to a format called stdout\
+\
+dest: \'93/etc/ansibe/backups/show_run_\{\{ inventory_hostname \}\}.txt\'94 \'96 this defines the destination and filename format which will be show_run_hostname.txt\
+\
+See following link for Cisco examples and additional IOS modules info:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+{\field{\*\fldinst{HYPERLINK "https://developer.cisco.com/learning/modules/intro-ansible-iosxe/ansible-ios-modules/gather-information/"}}{\fldrslt \cf0 https://developer.cisco.com/learning/modules/intro-ansible-iosxe/ansible-ios-modules/gather-information/}}\
+\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf3 ANSIBLE SYNTAX CHECK:
+\f1\b0 \cf0  
+\f0\b \expnd0\expndtw0\kerning0
+ansible-playbook <playbook. yml> --syntax-check
+\f1\b0 \kerning1\expnd0\expndtw0 \
+\
+\
+\
+---------------------------------------------------------------------------------- \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf2 CHAPTER 07 - The When conditional
+\f1\b0 \cf0 \
+\
+GIT best practice\
+\
+It's a good idea to do '
+\f0\b git pull
+\f1\b0 ' to get updated files if someone else is also doing changes to your playbooks or other files.  You will be asked for the default ssh key password (id_ed25519).\
+\
+WHEN parameter:\
+to check for a specific condition, in this case the example playbook is installing and app when the Linux distribution is the one specified (Ubuntu or CentOS). If you don't add the when condition the playbook will fail if the command (APT in this case) is not supported by the Linux version (CentOS uses a different command).\
+I another note, Ansible runs by default the gather_facts command unless you specifically set gather_facts+ false. The example playbook uses a built in Ansible variable (ansiblle_distribution) that contains information about the Linux version.\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+---\
+ \
+ - hosts: all\
+   become: true\
+   tasks:\
+ \
+   - name: update repository index\
+     apt:\
+       update_cache: yes\
+     when: ansible_distribution == "Ubuntu"\
+ \
+   - name: install apache2 package\
+     apt:\
+       name: apache2\
+       state: latest\
+     when: ansible_distribution == "Ubuntu"\
+ \
+   - name: add php support for apache\
+     apt:\
+       name: libapache2-mod-php\
+       state: latest\
+     when: ansible_distribution == "Ubuntu"\
+ \
+   - name: update repository index\
+     dnf:\
+       update_cache: yes\
+     when: ansible_distribution == "CentOS"\
+ \
+   - name: install httpd package\
+     dnf:\
+       name: httpd\
+       state: latest\
+     when: ansible_distribution == "CentOS"\
+ \
+   - name: add php support for apache\
+     dnf:\
+       name: php\
+       state: latest\
+     when: ansible_distribution == "CentOS"\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \kerning1\expnd0\expndtw0  \
+You run this playbook with command "
+\f0\b ansible-playbook --ask-become-pass install_apache.yml
+\f1\b0 " in order to be prompted for the become (sudo) password before the playbokk is executed.\
+\
+You can also check for different Linux versions using the example modified fragment below:\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+  - name: update repository index\
+     apt:\
+       update_cache: yes\
+     
+\f0\b when: ansible_distribution in ["Ubuntu", "Debian"]
+\f1\b0 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \kerning1\expnd0\expndtw0 That will proceed to execute the command if either of those Linux versions are true.\
+\
+One way to find out all the available built-in Ansible variables and contents that help you build playbooks, is:\
+
+\f0\b ansible all -m gather_facts --limit 10.10.10.10 
+\f1\b0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+or in my Lab:\
+
+\f0\b ansible iosxe -m gather_facts
+\f1\b0 \
+\
+\
+here you're limiting the output to a single server. If you wish to display the info for all servers in your Inventory file, don't include the "-- limit" parameter.\
+\
+if you're looking for the contents of a specific variable in a server, you can do:\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 ansible all -m gather_facts --limit 10.10.10.10 | grep ansible_distribution\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f4\i \cf0 To check for multiple conditions, you can do
+\f1\i0\b0 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+ - name: update repository index\
+     apt:\
+       update_cache: yes\
+     
+\f0\b when: ansible_distribution == "Ubuntu" and ansible_distribution_version == "8.2"\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf2 \kerning1\expnd0\expndtw0 CHAPTER 08 - Consolidate previous playbook
+\f1\b0 \cf0 \
+\
+Consolidated install_apache.yml playbokk\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs26 \cf0 \expnd0\expndtw0\kerning0
+ 
+\f1\fs28 ---\
+ \
+ - hosts: all\
+   become: true\
+   tasks:\
+ \
+   - name: install apache2 package\
+     apt:\
+       name:\
+         - apache2\
+         - libapache2-mod-php\
+       state: latest\
+       update_cache: yes\
+     when: ansible_distribution == "Ubuntu"\
+ \
+   - name: install httpd package\
+     dnf:\
+       name:\
+         - httpd\
+         - php\
+       state: latest\
+       update_cache: yes\
+     when: ansible_distribution == "CentOS"\
+\
+
+\f2\fs26 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs28 \cf0 You can consolidate the playbook even further by using the package module and variables:\
+\
+Inventory should be modified as follows:\
+\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b \cf0 Inventory file (with host variables added)
+\f1\b0 \
+\pard\pardeftab720\partightenfactor0
+\cf0 172.16.250.132 apache_package=apache2 php_package=libapache2-mod-php\
+172.16.250.133 apache_package=apache2 php_package=libapache2-mod-php\
+172.16.250.134 apache_package=apache2 php_package=libapache2-mod-php\
+172.16.250.248 apache_package=httpd php_package=php\
+\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 Modified Playbook
+\f1\b0 \
+\
+---\
+ \
+ - hosts: all\
+   become: true\
+   tasks:\
+ \
+   - name: install apache and php\
+     package:\
+       name:\
+         - "{\field{\*\fldinst{HYPERLINK "https://wiki.learnlinux.tv/index.php?title=Template:Apache_package&action=edit&redlink=1"}}{\fldrslt \cf7 \ul \ulc7 \{\{ apache_package \}\}}}"\
+         - "{\field{\*\fldinst{HYPERLINK "https://wiki.learnlinux.tv/index.php?title=Template:Apache_package&action=edit&redlink=1"}}{\fldrslt \cf7 \ul \ulc7 \{\{ php_package \}\}}}"\
+       state: latest\
+       update_cache: yes\
+\
+\
+Another condensed version using templates\
+\
+---\
+ \
+ - hosts: all\
+   become: true\
+   tasks:\
+ \
+   - name: install apache and php\
+     package:\
+       name:\
+         - "{\field{\*\fldinst{HYPERLINK "https://wiki.learnlinux.tv/index.php?title=Template:Apache_package&action=edit&redlink=1"}}{\fldrslt \cf7 \ul \ulc7 Template:Apache package}}"\
+         - "{\field{\*\fldinst{HYPERLINK "https://wiki.learnlinux.tv/index.php?title=Template:Php_package&action=edit&redlink=1"}}{\fldrslt \cf7 \ul \ulc7 Template:Php package}}"\
+       state: latest\
+       update_cache: yes\
+\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b \cf2 \kerning1\expnd0\expndtw0 CHAPTER 09 - Target specific nodes
+\f1\b0 \cf0 \
+\
+start with previous version of playbook with two tasks:\
+Copy this file to site.yml\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs26 \cf0 \expnd0\expndtw0\kerning0
+ 
+\f1\fs28 ---\
+ \
+ - hosts: all\
+   become: true\
+   tasks:\
+ \
+   - name: install apache2 package\
+     apt:\
+       name:\
+         - apache2\
+         - libapache2-mod-php\
+       state: latest\
+       update_cache: yes\
+     when: ansible_distribution == "Ubuntu"\
+ \
+   - name: install httpd package\
+     dnf:\
+       name:\
+         - httpd\
+         - php\
+       state: latest\
+       update_cache: yes\
+     when: ansible_distribution == "CentOS"\
+\
+Also 
+\f0\b Inventory
+\f1\b0  file was restored to have only single host ip addresses, with no variables and modified as shown below:\
+\
+[web_servers]\
+172.16.250.132\
+172.16.250.248\
+\
+[db_servers]\
+172.16.250.133\
+\
+[file_servers]\
+172.16.250.134\
+\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 Final version of modified site.yml playbook.
+\f1\b0 \
+Note that keyword 
+\f0\b pre_tasks
+\f1\b0  is used to ensure particular task(s) are run previous to other tasks. In this case would not do much since Ansible runs the playbook from top to bottom.\
+\
+---\
+ \
+ - hosts: all\
+   become: true\
+   pre_tasks:\
+ \
+   - name: install updates (CentOS)\
+     dnf:\
+       update_only: yes\
+       update_cache: yes\
+     when: ansible_distribution == "CentOS"\
+ \
+   - name: install updates (Ubuntu)\
+     apt:\
+       upgrade: dist\
+       update_cache: yes\
+     when: ansible_distribution == "Ubuntu"\
+ \
+ \
+ - hosts: web_servers\
+   become: true\
+   tasks:\
+ \
+   - name: install httpd package (CentOS)\
+     dnf:\
+       name:\
+         - httpd\
+         - php\
+       state: latest\
+     when: ansible_distribution == "CentOS"\
+ \
+   - name: install apache2 package (Ubuntu)\
+     apt:\
+       name:\
+         - apache2\
+         - libapache2-mod-php\
+       state: latest\
+     when: ansible_distribution == "Ubuntu"\
+ \
+ - hosts: db_servers\
+   become: true\
+   tasks:\
+ \
+   - name: install mariadb server package (CentOS)\
+     dnf:\
+       name: mariadb\
+       state: latest\
+     when: ansible_distribution == "CentOS"\
+ \
+   - name: install mariadb server\
+     apt:\
+       name: mariadb-server\
+       state: latest\
+     when: ansible_distribution == "Ubuntu"\
+ \
+ - hosts: file_servers\
+   become: true\
+   tasks:\
+ \
+   - name: install samba package\
+     package:\
+       name: samba\
+       state: latest\
+\
+\
+\
+\
+}

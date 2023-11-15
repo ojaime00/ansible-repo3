@@ -6,7 +6,7 @@
 
   tasks:
   - name: set ACL via CLI
-      cisco.ios.ios_config:
+    cisco.ios.ios_config:
       lines:
         - 10 permit ip host 1.1.1.1 any log
         - 20 permit ip host 2.2.2.2 any log
@@ -20,7 +20,7 @@
     cisco.ios.ios_config:
       lines:
         - ntp server 10.1.{{subnet_id}}.{{item}}
-    loop:
+      loop:
         - 11
         - 12
         - 13
